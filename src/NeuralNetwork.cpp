@@ -86,10 +86,45 @@ std::vector<double> NeuralNetwork::softmax(const std::vector<double>& input) {
 }
 // Backpropagation placeholder (for training implementation later)
 void NeuralNetwork::backpropagate(const std::vector<double>& expected_output) {
-    // Placeholder code: Define error and adjust weights here in future steps.
+    // Calculate output layer error
+    std::vector<double> output_errors(output_size);
+    for (int k = 0; k < output_size; ++k) {
+        output_errors[k] = output_layer[k] - expected_output[k];
+    }
+
+    // Backpropagate error to hidden layer
+    std::vector<double> hidden_errors(hidden_size, 0.0);
+    for (int j = 0; j < hidden_size; ++j) {
+        for (int k = 0; k < output_size; ++k) {
+            hidden_errors[j] += output_errors[k] * weights_hidden_output[j][k];
+        }
+        hidden_errors[j] *= relu_derivative(hidden_layer_output[j]);
+    }
+
+    // Update weights from hidden to output layer
+    for (int j = 0; j < hidden_size; ++j) {
+        for (int k = 0; k < output_size; ++k) {
+            weights_hidden_output[j][k] -= learning_rate * output_errors[k] * hidden_layer_output[j];
+        }
+    }
+
+    // Update weights from input to hidden layer
+    for (int i = 0; i < input_size; ++i) {
+        for (int j = 0; j < hidden_size; ++j) {
+            weights_input_hidden[i][j] -= learning_rate * hidden_errors[j] * hidden_layer_output[j];
+        }
+    }
 }
 
 // Update weights placeholder
 void NeuralNetwork::updateWeights() {
     // Placeholder code: Update weights after error correction during training.
+}
+
+double calculateMSE(const std::vector<double>& expected_output, const std::vector<double>& actual_output) {
+    double mse = 0.0;
+    for (size_t i = 0; i < expected_output.size(); ++i) {
+        mse += pow(expected_output[i] - actual_output[i], 2);
+    }
+    return mse / expected_output.size();
 }
