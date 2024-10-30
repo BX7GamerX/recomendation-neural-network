@@ -16,11 +16,14 @@ public:
 
     // Member functions
     std::vector<double> forward(const std::vector<double>& input_data);
+    std::vector<double> forward(const json& user_data); // Overloaded function to handle JSON input
+
     void backpropagate(const std::vector<double>& expected_output);
     void updateWeights();
 
     // Data preprocessing
     std::vector<double> normalizeInput(const json& user_data);
+    json generateRecommendations(const json& user_data);
 
 private:
     // Neural network parameters

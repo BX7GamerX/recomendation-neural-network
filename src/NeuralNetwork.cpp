@@ -128,3 +128,69 @@ double calculateMSE(const std::vector<double>& expected_output, const std::vecto
     }
     return mse / expected_output.size();
 }
+#include <algorithm> // For std::min and std::max
+
+std::vector<double> NeuralNetwork::normalizeInput(const json& user_data) {
+    std::vector<double> normalized_data;
+
+    // Example normalization of engagement metrics
+    double like_count = user_data["likes"];
+    double dislike_count = user_data["dislikes"];
+    double duration = user_data["duration"];
+    double shares = user_data["shares"];
+    double comments = user_data["comments"];
+
+    // Define normalization (assuming max values for each metric for simplicity)
+    double max_likes = 1000.0, max_dislikes = 500.0, max_duration = 300.0; // in seconds
+    double max_shares = 500.0, max_comments = 200.0;
+
+    // Normalize each metric to be in the range [0, 1]
+    normalized_data.push_back(std::min(like_count / max_likes, 1.0));
+    normalized_data.push_back(std::min(dislike_count / max_dislikes, 1.0));
+    normalized_data.push_back(std::min(duration / max_duration, 1.0));
+    normalized_data.push_back(std::min(shares / max_shares, 1.0));
+    normalized_data.push_back(std::min(comments / max_comments, 1.0));
+
+    return normalized_data;
+}
+std::vector<double> NeuralNetwork::forward(const json& user_data) {
+    // Normalize JSON input
+    std::vector<double> input_data = normalizeInput(user_data);
+
+    // Use the existing forward function with the normalized input
+    return forward(input_data);
+}
+
+// Function to generate recommendations
+#include <nlohmann/json.hpp>
+#include "NeuralNetwork.h"
+
+using json = nlohmann::json;
+
+// Function to generate recommendations
+json NeuralNetwork::generateRecommendations(const json& user_data) {
+    // Normalize the input JSON data
+    std::vector<double> input_data = normalizeInput(user_data);
+
+    // Perform forward pass to get output probabilities
+    std::vector<double> output = forward(input_data);
+
+    // Assuming output probabilities correspond to content IDs (e.g., 0, 1)
+    // Generate recommendations based on the highest probability
+    json recommendations;
+    recommendations["recommended_content_ids"] = json::array();
+
+    // Select the top 10 recommendations based on highest probabilities
+    std::vector<size_t> sorted_indices(output.size());
+    std::iota(sorted_indices.begin(), sorted_indices.end(), 0);
+    std::sort(sorted_indices.begin(), sorted_indices.end(),
+              [&output](size_t i, size_t j) { return output[i] > output[j]; });
+
+    for (size_t i = 0; i < std::min<size_t>(10, sorted_indices.size()); ++i) {
+        recommendations["recommended_content_ids"].push_back(sorted_indices[i]);
+    }
+
+    return recommendations;
+}
+
+
